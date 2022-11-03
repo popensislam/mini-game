@@ -1,6 +1,9 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+
 import SweetItem1 from "../assets/sweetImages/sweetItem1.png";
 import SweetItem2 from "../assets/sweetImages/sweetItem2.png";
 import SweetItem3 from "../assets/sweetImages/sweetItem3.png";
@@ -12,6 +15,7 @@ import GoldItem2 from "../assets/goldImages/goldItem2.png";
 import GoldItem3 from "../assets/goldImages/goldItem3.png";
 import GoldItem4 from "../assets/goldImages/goldItem4.png";
 import GoldItem5 from "../assets/goldImages/goldItem5.png";
+import gold from "../assets/goldImages/gold.png";
 
 import Image, { StaticImageData } from "next/image";
 import {
@@ -32,42 +36,32 @@ import {
   TitleOnItem,
 } from "../styles/uielements.styled";
 import ModlaFinishGame from "../components/ModalFinishGame";
-import { customSort, lettersSort, randomIntFromInterval, randomLetters } from "../helper";
-
-// Рандомные числа
-// function randomIntFromInterval(min: number, max: number, allCycles: number) {
-//   const array = [];
-//   const result = [];
-
-//   for (let i = min; i <= max; i++) {
-//     array.push(i);
-//   }
-
-//   for (let countCycles = 1; countCycles <= allCycles; countCycles++) {
-//     result.push(array.splice(Math.random() * array.length, 1)[0]);
-//   }
-//   return result;
-// }
-
-// // Сортирую для ответа
-// function customSort(order: string, arr: number[]) {
-//   if (order === "desc") {
-//     return arr.sort((a: number, b: number) => a - b);
-//   } else {
-//     return arr.sort((a: number, b: number) => b - a);
-//   }
-// }
+import {
+  customSort,
+  lettersSort,
+  randomIntFromInterval,
+  randomLetters,
+} from "../helper";
 
 const data: { sweet: StaticImageData[]; gold: StaticImageData[] } = {
   sweet: [SweetItem1, SweetItem2, SweetItem3, SweetItem4, SweetItem2],
   gold: [GoldItem1, GoldItem2, GoldItem3, GoldItem4, GoldItem5],
 };
+const boards: StaticImageData[] = [sweet, gold];
+
+const keys: string[] = ["sweet", "gold"];
+
+function randomImages() {
+  let numb: number | any = Math.floor(Math.random() * 2);
+  return { images: data?.[keys[numb]], key: numb };
+}
 
 export default function Game() {
   const router = useRouter();
   const { type, order, count }: any = router.query;
   const [params, setParams] = useState<[] | any>([]);
   const [answer, setAnswer] = useState<[] | any>([]);
+  const [imgState, setImgState] = useState<number | null>(null);
   const [selectedDrag, setSelectedDrag] = useState<object | any>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
 
@@ -89,12 +83,14 @@ export default function Game() {
     const from: string[] = type?.split("-");
 
     if (type === "A") {
+      const letters = randomLetters(count);
+      const sortLetters = lettersSort(letters.split(""), order);
 
-      const letters = randomLetters(count)
-      const sortLetters = lettersSort(letters.split(''), order)
-
-      const resultValues = letters.split('')?.map((item: string, i: number) => {
-        return { value: item, image: data?.sweet[i] };
+      const imagesData: { key: number; images: StaticImageData[] } =
+        randomImages();
+      setImgState(imagesData.key);
+      const resultValues = letters.split("")?.map((item: string, i: number) => {
+        return { value: item, image: imagesData.images[i] };
       });
       setParams(resultValues);
 
@@ -102,14 +98,17 @@ export default function Game() {
         return { value: item, image: "" };
       });
       setAnswer(resultAnswer);
-
     } else {
       const min: number = Number(from?.[0]);
       const max: number = Number(from?.[1]);
 
+      const imagesData: { key: number; images: StaticImageData[] } =
+        randomImages();
+      setImgState(imagesData.key);
+
       const values: number[] = randomIntFromInterval(min, max, count);
       const resultValues = values?.map((item: number, i: number) => {
-        return { value: item, image: data?.sweet[i] };
+        return { value: item, image: imagesData.images[i] };
       });
       setParams(resultValues);
 
@@ -166,86 +165,96 @@ export default function Game() {
 
 
   return (
-    <div className="content-game sweet">
-      {showModal && <ModlaFinishGame />}
-      <ItemArea>
-        <Relative>
-          <AbsoluteItemArea>
-            {params?.map(
-              (
-                item: { value: number; image: string | StaticImageData },
-                i: number
-              ) => (
-                <DragItem
-                  key={i}
-                  index={i}
-                  onDragStart={(e) =>
-                    dragStartHandler(e, {
-                      value: item?.value,
-                      image: item?.image,
-                      i,
-                    })
-                  }
-                  onDragOver={(e: any) => dragOverHandler(e)}
-                  draggable={item.value ? true : false}
-                  style={{ cursor: item.value ? "pointer" : "default" }}
-                >
-                  {item.image && (
-                    <Image
-                      src={item.image}
-                      width={150}
-                      height={150}
-                      alt="drops place"
-                    />
-                  )}
-                  <TitleOnItem>{item.value}</TitleOnItem>
-                </DragItem>
-              )
+    <DndProvider backend={HTML5Backend}>
+      <div className={`content-game ${keys?.[imgState]}`}>
+        {showModal && <ModlaFinishGame />}
+        <ItemArea>
+          <Relative>
+            <AbsoluteItemArea>
+              {params?.map(
+                (
+                  item: { value: number; image: string | StaticImageData },
+                  i: number
+                ) => (
+                  <DragItem
+                    key={i}
+                    index={i}
+                    onDragStart={(e) =>
+                      dragStartHandler(e, {
+                        value: item?.value,
+                        image: item?.image,
+                        i,
+                      })
+                    }
+                    onDragOver={(e: any) => dragOverHandler(e)}
+                    draggable={item.value ? true : false}
+                    style={{ cursor: item.value ? "pointer" : "default" }}
+                  >
+                    {item.image && (
+                      <Image
+                        src={item.image}
+                        width={150}
+                        height={150}
+                        alt="drops place"
+                      />
+                    )}
+                    <TitleOnItem>{item.value}</TitleOnItem>
+                  </DragItem>
+                )
+              )}
+            </AbsoluteItemArea>
+          </Relative>
+        </ItemArea>
+        <DropArea>
+          <Relative>
+            <AbsolteArrow>
+              {order === "desc" ? (
+                <>
+                  <ArrowTitle>По возрастанию</ArrowTitle>
+                  <ArrowBody />
+                  <Arrow />
+                </>
+              ) : (
+                <>
+                  <ArrowTitleRight>По убыванию</ArrowTitleRight>
+                  <ArrowBodyRight />
+                  <ArrowRight />
+                </>
+              )}
+            </AbsolteArrow>
+            {imgState !== null && (
+              <Image
+                priority
+                src={boards?.[imgState]}
+                width={990}
+                height={320}
+                alt="drops place"
+              />
             )}
-          </AbsoluteItemArea>
-        </Relative>
-      </ItemArea>
-      <DropArea>
-        <Relative>
-          <AbsolteArrow>
-            {order === "desc" ? (
-              <>
-                <ArrowTitle>По возрастанию</ArrowTitle>
-                <ArrowBody />
-                <Arrow />
-              </>
-            ) : (
-              <>
-                <ArrowTitleRight>По убыванию</ArrowTitleRight>
-                <ArrowBodyRight />
-                <ArrowRight />
-              </>
-            )}
-          </AbsolteArrow>
-          <Image src={sweet} width={990} height={320} alt="drops place" />
-          <Absolute>
-            {answer?.map(
-              (item: { value: number; image: string | any }, i: number) => (
-                <ResultItem
-                  key={i}
-                  onDragOver={(e) => dragOverHandler(e)}
-                  onDrop={(e) => dropHandler(e, item)}
-                  draggable={true}
-                >
-                  {item?.image && (
-                    <Image
-                      src={item?.image}
-                      width={120}
-                      height={120}
-                      alt="drops place"
-                    />
-                  )}
-                </ResultItem>
-              )
-            )}
-          </Absolute>
-        </Relative>
-      </DropArea>
-    </div>
+            <Absolute>
+              {answer?.map(
+                (item: { value: number; image: string | any }, i: number) => (
+                  <ResultItem
+                    key={i}
+                    onDragOver={(e) => dragOverHandler(e)}
+                    onDrop={(e) => dropHandler(e, item)}
+                    draggable={true}
+                  >
+                    {item?.image && (
+                      <Image
+                        src={item?.image}
+                        width={120}
+                        height={120}
+                        alt="drops place"
+                      />
+                    )}
+                  </ResultItem>
+                )
+              )}
+            </Absolute>
+          </Relative>
+        </DropArea>
+      </div>
+    </DndProvider>
   );
 }

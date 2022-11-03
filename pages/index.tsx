@@ -10,8 +10,10 @@ import {
   ButtonStart,
   Cutter,
 } from "../styles/uielements.styled";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/router";
+
+// import switchSound from '../assets/switch.mp3'
 
 export default function Home() {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function Home() {
   const [buttonActive, setButtonActive] = useState<boolean>(false);
   const itemsTotal = [2, 3, 4, 5];
   const values: string[] = ["A", "9", "19", "50", "99", "999"];
+  const audioRef = useRef<HTMLAudioElement | null | any>(null)
 
   const handleStartGame = () => {
     router.push({
@@ -37,8 +40,17 @@ export default function Home() {
     });
   };
 
+  const handleOnChangeSwitched = () => {
+    audioRef.current.play()
+    setTimeout(() => {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }, 2000)
+  }
+
   return (
     <div className="content-form">
+      <audio ref={audioRef} src='https://www.w3schools.com/html/horse.mp3'/>
       <FormWrapper modal={false}>
         <FormColorWrapper>
           <Cutter>
@@ -54,7 +66,10 @@ export default function Home() {
               value={countItems}
               min="2"
               max="5"
-              onChange={(e) => setCountItems(parseInt(e.target.value))}
+              onChange={(e) => {
+                setCountItems(parseInt(e.target.value))
+                handleOnChangeSwitched()
+              }}
             />
           </Cutter>
           <Cutter>
@@ -70,7 +85,10 @@ export default function Home() {
               value={value}
               min="1"
               max="6"
-              onChange={(e) => setValue(parseInt(e.target.value))}
+              onChange={(e) => {
+                setValue(parseInt(e.target.value))
+                handleOnChangeSwitched()
+              }}
             />
           </Cutter>
           <Cutter>

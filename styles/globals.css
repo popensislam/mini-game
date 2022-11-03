@@ -67,14 +67,7 @@ body {
   flex-direction: column;
   justify-content: center;
 }
-.flower {
-  background: url('../assets/flowersBack.png') repeat center;
-  background-size: cover;
-}
-.forest {
-  background: url('../assets/forestBack.png') repeat center;
-  background-size: cover;
-}
+
 .gold {
   background: url('../assets/goldImages/goldBack.png') repeat center;
   background-size: cover;
