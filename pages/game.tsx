@@ -43,7 +43,7 @@ import {
   randomLetters,
 } from "../helper";
 
-const data: { sweet: StaticImageData[]; gold: StaticImageData[] } = {
+const data: {[index: string]: any, sweet: StaticImageData[], gold: StaticImageData[] } = {
   sweet: [SweetItem1, SweetItem2, SweetItem3, SweetItem4, SweetItem2],
   gold: [GoldItem1, GoldItem2, GoldItem3, GoldItem4, GoldItem5],
 };
@@ -52,8 +52,9 @@ const boards: StaticImageData[] = [sweet, gold];
 const keys: string[] = ["sweet", "gold"];
 
 function randomImages() {
-  let numb: number | any = Math.floor(Math.random() * 2);
-  return { images: data?.[keys[numb]], key: numb };
+  let numb: number = Math.floor(Math.random() * 2);
+  const img: any = data?.[keys[numb]]
+  return { images: img, key: numb };
 }
 
 export default function Game() {
@@ -166,7 +167,7 @@ export default function Game() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className={`content-game ${keys?.[imgState]}`}>
+      <div className={`content-game ${imgState !== null && keys?.[imgState]}`}>
         {showModal && <ModlaFinishGame />}
         <ItemArea>
           <Relative>
