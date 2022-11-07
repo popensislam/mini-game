@@ -7,7 +7,7 @@ import {
 } from "../styles/modal.styled";
 import { ButtonStart, FormColorWrapper, FormWrapper } from "../styles/uielements.styled";
 import Star from "../assets/star.svg";
-import WinTItle from "../assets/winTItle.svg";
+import WinTItle from "../assets/winTitle.svg";
 import Image from "next/image";
 import { useRouter } from "next/router";
 
